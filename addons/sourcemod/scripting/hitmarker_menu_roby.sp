@@ -118,7 +118,7 @@ void init_hitsound_menu(int client) {
 	char info[8], item[64];
 	Menu menu = new Menu(hitsound_menu_cb);
 	menu.SetTitle("Choose your hitsound:");
-	for (int i = 0; i < hitmarkers; i++) {
+	for (int i = 0; i < hitsounds; i++) {
 		Format(item, sizeof(item), "%s %s", hitsound_name[i], i == g_client_hitsound[client] ? "[X]" : " ");
 		IntToString(i, info, sizeof(info));
 		menu.AddItem(info, item);
@@ -186,8 +186,8 @@ public int hitsound_menu_cb(Menu menu, MenuAction action, int client, int param)
 			SetClientCookie(client, g_cookie_hitsound, item); // pls work
 			g_client_hitsound[client] = option;
 
-			if (!option)	PrintToChat(client, "%s \x0FYou disabled \x07hitsounds on hit.", TAG_HS);
-			else			PrintToChat(client, "%s \x0FYou chose \x07\"%s\" \x0Fhitmarker (on hit)", TAG_HS, hitsound_name[option]);
+			if (!option)	PrintToChat(client, "%s \x0FYou disabled \x07hitsounds", TAG_HS);
+			else			PrintToChat(client, "%s \x0FYou chose \x07\"%s\" \x0Fhitsound", TAG_HS, hitsound_name[option]);
 			
 			cl_play_sound(client, hitsound_path[option]);
 		}
