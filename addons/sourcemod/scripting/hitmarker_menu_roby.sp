@@ -45,7 +45,9 @@ public OnPluginStart() {
 	RegConsoleCmd("sm_hitmark", cmd_hitmarker);
 	RegConsoleCmd("sm_hm", cmd_hitmarker);
 	RegConsoleCmd("sm_hit", cmd_hit);
+	RegConsoleCmd("sm_hitsounds", cmd_hitsound);
 	RegConsoleCmd("sm_hitsound", cmd_hitsound);
+	RegConsoleCmd("sm_hs", cmd_hitsound);
 	
 	HookEvent("player_hurt", event_player_hurt, EventHookMode_Post);
 	HookEvent("player_death", event_player_death);
