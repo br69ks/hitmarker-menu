@@ -19,6 +19,7 @@ public Plugin myinfo = {
 #define TAG_HM 						"\x01 \x0B[Hitmarker]\x01"
 #define TAG_DM 						"\x01 \x0B[Deathmarker]\x01"
 #define TAG_HS 						"\x01 \x0B[Hitsound]\x01"
+#define TAG_DS 						"\x01 \x0B[Deathsound]\x01"
 #define HITMARKER_SHOW_TIME			0.45
 #define SPECMODE_NONE 				0
 #define SPECMODE_FIRSTPERSON 		4
@@ -79,7 +80,7 @@ public OnPluginStart() {
 	RegConsoleCmd("sm_ds", cmd_deathsound);
 	
 	HookEvent("player_hurt", event_player_hurt, EventHookMode_Post);
-	HookEvent("player_death", event_player_death, EventHookMode_Pre);
+	HookEvent("player_death", event_player_death);
 	
 	g_cookie_hitmarker 		= new Cookie("roby_hitmarker_kill", "Kill hitmarker", CookieAccess_Private);
 	g_cookie_hit			= new Cookie("roby_hitmarker_hit", "Hit hitmarker", CookieAccess_Private);
@@ -282,8 +283,8 @@ public int deathmarker_menu_cb(Menu menu, MenuAction action, int client, int par
 			SetClientCookie(client, g_cookie_deathmarker, item); // pls work
 			g_client_deathmarker[client] = option;
 
-			if (!option)	PrintToChat(client, "%s \x0FYou disabled \x07deathmarkers", TAG_HS);
-			else			PrintToChat(client, "%s \x0FYou chose \x07\"%s\" \x0Fdeathmarker", TAG_HS, deathmarker_name[option]);
+			if (!option)	PrintToChat(client, "%s \x0FYou disabled \x07deathmarkers", TAG_DM);
+			else			PrintToChat(client, "%s \x0FYou chose \x07\"%s\" \x0Fdeathmarker", TAG_DM, deathmarker_name[option]);
 			
 			cl_show_overlay(client, deathmarker_path[option]);
 			CreateTimer(HITMARKER_SHOW_TIME, cl_hide_overlay, client);
@@ -305,8 +306,8 @@ public int deathsound_menu_cb(Menu menu, MenuAction action, int client, int para
 			SetClientCookie(client, g_cookie_deathsound, item); // pls work
 			g_client_deathsound[client] = option;
 
-			if (!option)	PrintToChat(client, "%s \x0FYou disabled \x07deathsounds", TAG_HS);
-			else			PrintToChat(client, "%s \x0FYou chose \x07\"%s\" \x0Fdeathsound", TAG_HS, deathsound_name[option]);
+			if (!option)	PrintToChat(client, "%s \x0FYou disabled \x07deathsounds", TAG_DS);
+			else			PrintToChat(client, "%s \x0FYou chose \x07\"%s\" \x0Fdeathsound", TAG_DS, deathsound_name[option]);
 			
 			cl_play_sound(client, deathsound_path[option]);
 		}
@@ -326,13 +327,13 @@ public Action event_player_hurt(Event event, const char[] name, bool dontBroadca
 		CreateTimer(HITMARKER_SHOW_TIME, cl_hide_overlay, attacker);
 	}
 	
-	show_to_spec(attacker, false);
+	show_to_spec(attacker, 0, false);
 	return Plugin_Handled;
 }
 
 public Action event_player_death(Event event, const char[] name, bool dontBroadcast) {
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
-	int victim 	 = GetClientOfUserId(event.GetInt("victim"));
+	int victim 	 = GetClientOfUserId(event.GetInt("userid"));
     
 	if (is_valid_client(attacker) && g_client_hitmarker[attacker]) {
 		cl_show_overlay(attacker, hitmarker_kill_path[g_client_hitmarker[attacker]]);
@@ -346,7 +347,7 @@ public Action event_player_death(Event event, const char[] name, bool dontBroadc
 		CreateTimer(HITMARKER_SHOW_TIME, cl_hide_overlay, victim);
 	}
 
-	show_to_spec(attacker, true);
+	show_to_spec(attacker, victim, true);
 	return Plugin_Handled;
 }
 
@@ -370,14 +371,23 @@ stock bool is_valid_client(int client) {
     return (client >= 1 && client <= MaxClients && IsClientConnected(client) && IsClientInGame(client) && !IsClientSourceTV(client));
 }
 
-void show_to_spec(int attacker, bool kill) {
+void show_to_spec(int attacker, int victim, bool kill) {
 	// s/o kamay
 	for (int spec = 1; spec <= MaxClients; spec++) {
+		int iVictim = GetEntPropEnt(spec, Prop_Send, "m_hObserverTarget");
+		if (kill && iVictim == victim)
+		{
+			cl_show_overlay(victim, deathmarker_path[g_client_deathmarker[victim]]);
+			cl_play_sound(victim, deathsound_path[g_client_deathsound[victim]]);
+			CreateTimer(HITMARKER_SHOW_TIME, cl_hide_overlay, victim);
+			return;
+		}
+
 		if (!is_valid_client(spec) || !IsClientObserver(spec))
 			continue;
 	
 		int iSpecMode = GetEntProp(spec, Prop_Send, "m_iObserverMode");
-
+		
 		if (iSpecMode == SPECMODE_FIRSTPERSON || iSpecMode == SPECMODE_3RDPERSON) {
 			int iTarget = GetEntPropEnt(spec, Prop_Send, "m_hObserverTarget");
 			
