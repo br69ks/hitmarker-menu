@@ -374,6 +374,11 @@ stock bool is_valid_client(int client) {
 void show_to_spec(int attacker, int victim, bool kill) {
 	// s/o kamay
 	for (int spec = 1; spec <= MaxClients; spec++) {
+	
+
+		if (!is_valid_client(spec) || !IsClientObserver(spec))
+			return;
+			
 		int iVictim = GetEntPropEnt(spec, Prop_Send, "m_hObserverTarget");
 		if (kill && iVictim == victim)
 		{
@@ -382,10 +387,7 @@ void show_to_spec(int attacker, int victim, bool kill) {
 			CreateTimer(HITMARKER_SHOW_TIME, cl_hide_overlay, victim);
 			return;
 		}
-
-		if (!is_valid_client(spec) || !IsClientObserver(spec))
-			continue;
-	
+		
 		int iSpecMode = GetEntProp(spec, Prop_Send, "m_iObserverMode");
 		
 		if (iSpecMode == SPECMODE_FIRSTPERSON || iSpecMode == SPECMODE_3RDPERSON) {
